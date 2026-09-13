@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Fênix Blast",
+      "hasCanvas": true,
+      "bodyTextLen": 261,
+      "bodyTextHash": "0e1ed05554c9a86935e0142739bda322bca7fa3b41cdb394bd1f7388adefb4a2",
+      "bodyTextPrefix": "FÊNIX BLAST Ivan Moreira de Araújo PONTOS 0 NÍVEL 1/5 VIDAS 3 BO",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Fênix Blast",
+      "hasCanvas": true,
+      "bodyTextLen": 261,
+      "bodyTextHash": "0e1ed05554c9a86935e0142739bda322bca7fa3b41cdb394bd1f7388adefb4a2",
+      "bodyTextPrefix": "FÊNIX BLAST Ivan Moreira de Araújo PONTOS 0 NÍVEL 1/5 VIDAS 3 BO",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-preview.json"
+}
