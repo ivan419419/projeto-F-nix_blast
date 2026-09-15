@@ -323,6 +323,9 @@ export function siteHasCustomCard(site = {}) {
  * Otherwise empty — caller emits the og.grok.me placeholder.
  */
 export function resolveOgCardAsset(site = {}, cwd = process.cwd()) {
+  if (!cwd) {
+    return siteHasCustomCard(site) ? String(site.image ?? "").trim() || "/og.jpg" : "";
+  }
   return ogCardPublicPath(cwd) || (detectCustomOgCard(cwd, site) ? String(site.image ?? "").trim() || "/og.jpg" : "");
 }
 
@@ -402,22 +405,20 @@ function insertBeforeHeadClose(html, snippet) {
 
 export function normalizeHeadContext(ctx = {}) {
   const cwd = ctx.cwd ?? process.cwd();
-  // Middleware passes a baked `site`. Still consult the workspace so a
-  // public/og.jpg generated after that snapshot (or missed by a wrong cwd)
-  // wins over the og.grok.me placeholder. Vercel has no public/ to read, so
-  // a correct bake is unchanged.
-  const site = applyCustomCardFromFs(
-    ctx.site !== undefined ? ctx.site : snapshotOgIdentity(cwd).site,
-    cwd,
-  );
-  const appName = resolveOgTitle(site, ctx.appName ?? DEFAULT_APP_NAME, ctx.host ?? "");
+  // Integration points pass a baked `site`; keeping the generic helper
+  // side-effect free prevents callers and tests from inheriting cwd identity.
+  // When a site is supplied, a newly-created local custom card still wins.
+  const suppliedSite = ctx.site ?? {};
+  const site = ctx.cwd === undefined ? suppliedSite : applyCustomCardFromFs(suppliedSite, cwd);
+  const explicitAppName = String(ctx.appName ?? "").trim();
+  const appName = explicitAppName || resolveOgTitle(site, DEFAULT_APP_NAME, ctx.host ?? "");
   return {
     appName,
     projectId: ctx.projectId ?? readGrokProjectId(),
     creator: ctx.creator ?? readXCreator(),
     creatorId: ctx.creatorId ?? readXCreatorId(),
     host: ctx.host ?? "",
-    cwd,
+    cwd: ctx.cwd === undefined ? null : cwd,
     site,
   };
 }
@@ -426,12 +427,9 @@ export function injectGrokPwaHead(html, ctx = {}) {
   if (typeof html !== "string") return html;
   const { site, projectId, creator, creatorId, host, cwd } = normalizeHeadContext(ctx);
   const documentTitle = titleFromDocument(html);
-  const appName = resolveOgTitle(
-    site,
-    ctx.appName ?? DEFAULT_APP_NAME,
-    host,
-    documentTitle,
-  );
+  const explicitAppName = String(ctx.appName ?? "").trim();
+  const appName =
+    explicitAppName || resolveOgTitle(site, DEFAULT_APP_NAME, host, documentTitle);
   let next = stripShareMetaTags(html);
 
   const missing = grokPwaHeadTags(appName)
