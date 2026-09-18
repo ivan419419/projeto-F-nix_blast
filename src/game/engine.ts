@@ -247,9 +247,6 @@ function wantedDir(s: GameState): Dir | null {
   for (const k of order) {
     if (s.just.has(k)) return DIR_FROM_KEY[k] ?? null;
   }
-  for (const k of order) {
-    if (s.keys.has(k)) return DIR_FROM_KEY[k] ?? null;
-  }
   return null;
 }
 
@@ -287,16 +284,19 @@ function tryMove(s: GameState, a: Actor, dir: Dir, speed: number, dt: number, ig
       a.fromR = a.r;
       a.t = 0;
       a.moving = false;
-      // chain into the held direction on the same tick
-      const [dc, dr] = DIRS[dir];
-      const nc = a.c + dc;
-      const nr = a.r + dr;
-      a.dir = dir;
-      if (walkable(s, nc, nr, ignoreBomb)) {
-        a.moving = true;
-        a.toC = nc;
-        a.toR = nr;
-        a.t = Math.min(a.t, 0.99);
+      // O jogador para no centro do tile e exige novo comando.
+      // Inimigos mantêm o encadeamento contínuo original.
+      if (a !== s.player) {
+        const [dc, dr] = DIRS[dir];
+        const nc = a.c + dc;
+        const nr = a.r + dr;
+        a.dir = dir;
+        if (walkable(s, nc, nr, ignoreBomb)) {
+          a.moving = true;
+          a.toC = nc;
+          a.toR = nr;
+          a.t = Math.min(a.t, 0.99);
+        }
       }
     }
   }

@@ -6,3 +6,14 @@ build/
 .cache/
 *.log
 .DS_Store
+
+*.apk
+*.bak
+*.before-*
+v2/
+apks/
+.artifacts/
+.vercel/
+node_modules/
+dist/
+
