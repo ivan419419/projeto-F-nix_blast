@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #07070c;
+  --color-bg: #16263a;
   --color-surface: #12121c;
   --color-surface-2: #1a1a2e;
   --color-fg: #f4f0e8;
@@ -10,8 +10,8 @@
   --color-orange: #ff7a00;
   --color-gold: #ffd700;
   --color-danger: #e4453a;
-  --color-border: #2a2a40;
-  --color-ink: #07070c;
+  --color-border: #41627b;
+  --color-ink: #162638;
   --font-display: "Oxanium", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Sora", ui-sans-serif, system-ui, sans-serif;
   --radius-xs: 4px;

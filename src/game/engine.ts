@@ -2,7 +2,7 @@ export const COLS = 15;
 export const ROWS = 13;
 export const TILE = 32;
 export const FIXED_DT = 1 / 60;
-export const MAX_LEVEL = 5;
+export const MAX_LEVEL = 25;
 export const HI_KEY = "fenix-blast-hi";
 
 export type Phase = "title" | "how" | "playing" | "paused" | "clear" | "over";
