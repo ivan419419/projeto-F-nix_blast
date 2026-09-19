@@ -17,3 +17,5 @@ apks/
 node_modules/
 dist/
 
+bot.cjs
+bot.js
