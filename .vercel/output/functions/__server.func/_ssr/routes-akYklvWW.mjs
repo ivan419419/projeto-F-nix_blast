@@ -1,7 +1,7 @@
 import { i as __toESM } from "../_runtime.mjs";
-import { Bt as require_react, y as require_jsx_runtime } from "../_libs/@tanstack/react-router+[...].mjs";
+import { Ht as require_react, b as require_jsx_runtime } from "../_libs/@tanstack/react-router+[...].mjs";
 import { a as Flame, c as ChevronLeft, i as Heart, l as ChevronDown, n as Play, o as ChevronUp, r as Pause, s as ChevronRight, u as Bomb } from "../_libs/lucide-react.mjs";
-// node_modules/.nitro/vite/services/ssr/assets/routes-DUqYC0OO.js
+//#region node_modules/.nitro/vite/services/ssr/assets/routes-akYklvWW.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var HI_KEY = "fenix-blast-hi";
@@ -1166,4 +1166,5 @@ function TouchPad({ visible, onDir, onBomb }) {
 function Home() {
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameView, {});
 }
+//#endregion
 export { Home as component };

@@ -1,6 +1,6 @@
-import { B as SYM_ITERATOR, C as ERROR_CONSTRUCTOR, D as PROMISE_CONSTRUCTOR, G as SerovalMalformedNodeError, H as SerovalConflictedNodeIdError, I as SYMBOL_REF, K as SerovalMissingInstanceError, Q as SerovalUnsupportedNodeError, R as SYM_ASYNC_ITERATOR, S as CONSTANT_VAL, U as SerovalDepthLimitError, V as SYM_TO_STRING_TAG, W as SerovalDeserializationError, Y as SerovalPluginValidationError, ct as getReference, dt as isSequence, et as Stream, ft as isStream, gt as streamToAsyncIterable, mt as sequenceToIterator, ot as deserializeString, pt as resolvePlugins, q as SerovalMissingPluginError, rt as createSequence, tt as TEMPORAL_TYPE_NAME, z as SYM_IS_CONCAT_SPREADABLE } from "./@tanstack/react-router+[...].mjs";
-import { d as decodeArrayBuffer, f as getTypedArrayConstructor } from "./@tanstack/router-core+[...].mjs";
-// node_modules/seroval/dist/read-BSFu4fPn.js
+import { $ as SerovalUnsupportedNodeError, B as SYM_IS_CONCAT_SPREADABLE, C as CONSTANT_VAL, G as SerovalDeserializationError, H as SYM_TO_STRING_TAG, J as SerovalMissingPluginError, K as SerovalMalformedNodeError, L as SYMBOL_REF, O as PROMISE_CONSTRUCTOR, U as SerovalConflictedNodeIdError, V as SYM_ITERATOR, W as SerovalDepthLimitError, X as SerovalPluginValidationError, _t as streamToAsyncIterable, ft as isSequence, ht as sequenceToIterator, it as createSequence, lt as getReference, mt as resolvePlugins, nt as TEMPORAL_TYPE_NAME, pt as isStream, q as SerovalMissingInstanceError, st as deserializeString, tt as Stream, w as ERROR_CONSTRUCTOR, z as SYM_ASYNC_ITERATOR } from "./@tanstack/react-router+[...].mjs";
+import { l as decodeArrayBuffer, u as getTypedArrayConstructor } from "./@tanstack/router-core+[...].mjs";
+//#region node_modules/seroval/dist/read-BSFu4fPn.js
 function isValidKey(key) {
 	switch (key) {
 		case "constructor":
@@ -386,4 +386,5 @@ function fromJSON(source, options = {}) {
 		disabledFeatures
 	}), source.t);
 }
+//#endregion
 export { fromJSON as t };

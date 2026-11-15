@@ -1,5 +1,5 @@
-import { $ as SerovalUnsupportedTypeError, A as SERIALIZED_ASYNC_ITERATOR_CONSTRUCTOR, At as _getRenderedMatches, B as SYM_ITERATOR, C as ERROR_CONSTRUCTOR, Ct as createInlineCssPlaceholderAsset, E as OpaqueReference, Et as getStylesheetHref, F as SERIALIZED_STREAM_CONSTRUCTOR, It as dehydrateSsrMatchId, J as SerovalParserError, L as SYMBOL_STRING, M as SERIALIZED_PROMISE_CONSTRUCTOR, Mt as createSieveCache, N as SERIALIZED_PROMISE_FAILURE, Nt as decodePath, O as REFERENCES_KEY, P as SERIALIZED_PROMISE_SUCCESS, Q as SerovalUnsupportedNodeError, R as SYM_ASYNC_ITERATOR, Rt as rootRouteId, T as INV_SYMBOL_REF, U as SerovalDepthLimitError, V as SYM_TO_STRING_TAG, X as SerovalSerializationError, Z as SerovalUnknownTypedArrayError, at as createStream, b as ARRAY_BUFFER_CONSTRUCTOR, c as createHydrationScripts, dt as isSequence, et as Stream, ft as isStream, ht as serializeString, it as createSequenceFromIterable, j as SERIALIZED_ITERATOR_CONSTRUCTOR, jt as invariant, k as SERIALIZED_ARRAY_BUFFER_CONSTRUCTOR, kt as waitForReason, l as GLOBAL_TSR, lt as getReferenceID, nt as createPlugin, ot as deserializeString, pt as resolvePlugins, q as SerovalMissingPluginError, st as getPlainObjectPlugins, tt as TEMPORAL_TYPE_NAME, ut as isLiveStream, w as ERROR_CONSTRUCTOR_STRING, wt as createInlineCssStyleAsset, x as CONSTANT_STRING, z as SYM_IS_CONCAT_SPREADABLE } from "./react-router+[...].mjs";
-// node_modules/@tanstack/router-core/dist/esm/ssr/serializer/transformer.js
+import { $ as SerovalUnsupportedNodeError, A as SERIALIZED_ARRAY_BUFFER_CONSTRUCTOR, At as waitForReason, B as SYM_IS_CONCAT_SPREADABLE, Bt as rootRouteId, D as OpaqueReference, Dt as getStylesheetHref, E as INV_SYMBOL_REF, F as SERIALIZED_PROMISE_SUCCESS, Ft as decodePath, H as SYM_TO_STRING_TAG, I as SERIALIZED_STREAM_CONSTRUCTOR, J as SerovalMissingPluginError, M as SERIALIZED_ITERATOR_CONSTRUCTOR, N as SERIALIZED_PROMISE_CONSTRUCTOR, Nt as invariant, P as SERIALIZED_PROMISE_FAILURE, Pt as createSieveCache, Q as SerovalUnknownTypedArrayError, R as SYMBOL_STRING, Rt as dehydrateSsrMatchId, S as CONSTANT_STRING, T as ERROR_CONSTRUCTOR_STRING, Tt as createInlineCssStyleAsset, V as SYM_ITERATOR, W as SerovalDepthLimitError, Y as SerovalParserError, Z as SerovalSerializationError, at as createSequenceFromIterable, ct as getPlainObjectPlugins, dt as isLiveStream, et as SerovalUnsupportedTypeError, ft as isSequence, gt as serializeString, j as SERIALIZED_ASYNC_ITERATOR_CONSTRUCTOR, jt as _getRenderedMatches, k as REFERENCES_KEY, l as createHydrationScripts, mt as resolvePlugins, nt as TEMPORAL_TYPE_NAME, ot as createStream, pt as isStream, rt as createPlugin, st as deserializeString, tt as Stream, u as GLOBAL_TSR, ut as getReferenceID, w as ERROR_CONSTRUCTOR, wt as createInlineCssPlaceholderAsset, x as ARRAY_BUFFER_CONSTRUCTOR, z as SYM_ASYNC_ITERATOR } from "./react-router+[...].mjs";
+//#region node_modules/@tanstack/router-core/dist/esm/ssr/serializer/transformer.js
 /**
 * Create a strongly-typed serialization adapter for SSR hydration.
 * Use to register custom types with the router serializer.
@@ -7,7 +7,8 @@ import { $ as SerovalUnsupportedTypeError, A as SERIALIZED_ASYNC_ITERATOR_CONSTR
 function createSerializationAdapter(opts) {
 	return opts;
 }
-// node_modules/seroval/dist/typed-array-BWH0IKxT.js
+//#endregion
+//#region node_modules/seroval/dist/typed-array-BWH0IKxT.js
 function encodeArrayBuffer$1(current) {
 	const bytes = new Uint8Array(current);
 	if (typeof bytes.toBase64 === "function") return bytes.toBase64();
@@ -72,7 +73,8 @@ function readArrayBufferView(value, isDataView) {
 		length: getters.length.call(value)
 	};
 }
-// node_modules/seroval/dist/write-B_hZaAwC.js
+//#endregion
+//#region node_modules/seroval/dist/write-B_hZaAwC.js
 function createSerovalNode(t, i, s, c, m, p, e, a, f, b, o, l) {
 	if (c === void 0 && m === void 0 && p === void 0 && e === void 0 && a === void 0 && f === void 0 && b === void 0 && o === void 0 && l === void 0) return {
 		t,
@@ -2113,7 +2115,8 @@ function toCrossJSONStream(source, options) {
 	startStreamParse(ctx, source);
 	return destroyStreamParse.bind(null, ctx);
 }
-// node_modules/@tanstack/router-core/dist/esm/ssr/serializer/makeSerovalPlugin.js
+//#endregion
+//#region node_modules/@tanstack/router-core/dist/esm/ssr/serializer/makeSerovalPlugin.js
 /** Create a Seroval plugin for client/server symmetric (de)serialization. */
 /* @__NO_SIDE_EFFECTS__ */
 function makeSerovalPlugin(serializationAdapter) {
@@ -2137,7 +2140,8 @@ function makeSerovalPlugin(serializationAdapter) {
 		}
 	});
 }
-// node_modules/@tanstack/router-core/dist/esm/ssr/serializer/RawStream.js
+//#endregion
+//#region node_modules/@tanstack/router-core/dist/esm/ssr/serializer/RawStream.js
 /**
 * Marker class for ReadableStream<Uint8Array> that should be serialized
 * with base64/text encoding (JSON and SSR) or binary framing
@@ -2165,7 +2169,8 @@ var RawStream = class {
 		this.hint = options?.hint ?? "binary";
 	}
 };
-// node_modules/@tanstack/router-core/dist/esm/ssr/serializer/ShallowErrorPlugin.js
+//#endregion
+//#region node_modules/@tanstack/router-core/dist/esm/ssr/serializer/ShallowErrorPlugin.js
 /**
 * this plugin serializes only the `message` part of an Error
 * this helps with serializing e.g. a ZodError which has functions attached that cannot be serialized
@@ -2193,7 +2198,8 @@ var ShallowErrorPlugin = /* @__PURE__ */ createPlugin({
 		return new Error(ctx.deserialize(node.message));
 	}
 });
-// node_modules/@tanstack/router-core/dist/esm/ssr/serializer/rawStreamCodec.js
+//#endregion
+//#region node_modules/@tanstack/router-core/dist/esm/ssr/serializer/rawStreamCodec.js
 function toBase64(bytes) {
 	const chunks = [];
 	for (let i = 0; i < bytes.length; i += 32768) chunks.push(String.fromCharCode.apply(null, bytes.subarray(i, i + 32768)));
@@ -2310,7 +2316,8 @@ function fromEncodedStream(source, decode) {
 		}
 	});
 }
-// node_modules/@tanstack/router-core/dist/esm/ssr/serializer/RawStreamJSONPlugin.js
+//#endregion
+//#region node_modules/@tanstack/router-core/dist/esm/ssr/serializer/RawStreamJSONPlugin.js
 /**
 * Serializes a RawStream into JSON requests and static-cache responses.
 * The optional signal stops the source pump when the request is aborted.
@@ -2347,7 +2354,8 @@ var RawStreamJSONDeserializePlugin = /* @__PURE__ */ createPlugin({
 		return fromEncodedStream(ctx.deserialize(node.stream), ctx.deserialize(node.text) ? decodeText : fromBase64);
 	}
 });
-// node_modules/seroval-plugins/dist/web.js
+//#endregion
+//#region node_modules/seroval-plugins/dist/web.js
 var CLAIMED = /* @__PURE__ */ new WeakSet();
 function claim(value) {
 	if (typeof value === "object" && value !== null) {
@@ -2484,7 +2492,8 @@ var ReadableStreamPlugin = /* @__PURE__ */ createPlugin({
 		return READABLE_STREAM_FACTORY_CONSTRUCTOR(claim(ctx.deserialize(node.stream)));
 	}
 });
-// node_modules/@tanstack/router-core/dist/esm/ssr/serializer/seroval-plugins.js
+//#endregion
+//#region node_modules/@tanstack/router-core/dist/esm/ssr/serializer/seroval-plugins.js
 /**
 * Plugins for JSON transport from a client: serializes RawStream arguments
 * and reads plain JSON responses, which never carry RawStream nodes.
@@ -2504,7 +2513,8 @@ function createDefaultSerovalPlugins(signal) {
 * precedes the serialize half; it never matches during serialization.
 */
 var defaultSerovalDeserializerPlugins = [RawStreamJSONDeserializePlugin, .../* @__PURE__ */ createDefaultSerovalPlugins()];
-// node_modules/@tanstack/router-core/dist/esm/ssr/serializer/RawStreamRPCPlugin.js
+//#endregion
+//#region node_modules/@tanstack/router-core/dist/esm/ssr/serializer/RawStreamRPCPlugin.js
 /**
 * Server-side RawStream plugin for multiplexed server-function responses.
 * The `hint` is ignored: framed responses always carry raw bytes.
@@ -2526,7 +2536,8 @@ function createRawStreamRPCPlugin(onRawStream) {
 		deserialize: void 0
 	});
 }
-// node_modules/@tanstack/router-core/dist/esm/ssr/serializer/makeSsrSerovalPlugin.js
+//#endregion
+//#region node_modules/@tanstack/router-core/dist/esm/ssr/serializer/makeSsrSerovalPlugin.js
 /**
 * Create a Seroval plugin for server-side serialization only. `tracker.didRun`
 * becomes true once the plugin serialized a value.
@@ -2546,7 +2557,8 @@ function makeSsrSerovalPlugin(serializationAdapter, tracker) {
 		deserialize: void 0
 	});
 }
-// node_modules/@tanstack/router-core/dist/esm/ssr/serializer/RawStreamSSRPlugin.js
+//#endregion
+//#region node_modules/@tanstack/router-core/dist/esm/ssr/serializer/RawStreamSSRPlugin.js
 var nodeBuffer = globalThis.Buffer;
 var toBase64Fast = nodeBuffer ? (bytes) => nodeBuffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength).toString("base64") : toBase64;
 var BINARY_FACTORY = () => {};
@@ -2568,7 +2580,8 @@ function makeFactoryPlugin(tag, sentinel, source) {
 		deserialize: void 0
 	});
 }
-// node_modules/@tanstack/router-core/dist/esm/ssr/serializer/seroval-plugins.ssr.js
+//#endregion
+//#region node_modules/@tanstack/router-core/dist/esm/ssr/serializer/seroval-plugins.ssr.js
 /** Server-only plugins for streaming hydration data into HTML. */
 var ssrSerovalPlugins = [
 	ShallowErrorPlugin,
@@ -2595,7 +2608,8 @@ var ssrSerovalPlugins = [
 	}),
 	ReadableStreamPlugin
 ];
-// node_modules/@tanstack/router-core/dist/esm/ssr/ssr-server.js
+//#endregion
+//#region node_modules/@tanstack/router-core/dist/esm/ssr/ssr-server.js
 function dehydrateMatch(match) {
 	const dehydratedMatch = {
 		i: dehydrateSsrMatchId(match.id),
@@ -2921,7 +2935,8 @@ function attachRouterServerSsrUtils({ router, manifest, getRequestAssets }) {
 	}
 }
 function getNormalizedURL(url, base) {
-	const rawUrl = typeof url === "string" ? new URL(url.replace("\\", "%5C"), base) : url;
+	if (typeof url === "string") url = url.replace("\\", "%5C");
+	const rawUrl = new URL(url, base);
 	const handledProtocolRelativeURL = rawUrl.pathname.startsWith("//");
 	const decodedPathname = decodePath(handledProtocolRelativeURL ? rawUrl.pathname.replace(/^\/+/, "/") : rawUrl.pathname);
 	const searchParams = new URLSearchParams(rawUrl.search);
@@ -2931,114 +2946,8 @@ function getNormalizedURL(url, base) {
 		handledProtocolRelativeURL
 	};
 }
-// node_modules/cookie-es/dist/index.mjs
-var COOKIE_MAX_AGE_LIMIT = 3456e4;
-var maxAgeRegExp = /^-?\d+$/;
-var _nullProto = /* @__PURE__ */ Object.getPrototypeOf({});
-function parseSetCookie(str, options) {
-	const len = str.length;
-	let _endIdx = len;
-	let eqIdx = -1;
-	for (let i = 0; i < len; i++) {
-		const c = str.charCodeAt(i);
-		if (c === 59) {
-			_endIdx = i;
-			break;
-		}
-		if (c === 61 && eqIdx === -1) eqIdx = i;
-	}
-	if (eqIdx >= _endIdx) eqIdx = -1;
-	const name = eqIdx === -1 ? "" : _trim(str, 0, eqIdx);
-	if (name && name in _nullProto) return void 0;
-	let value = eqIdx === -1 ? _trim(str, 0, _endIdx) : _trim(str, eqIdx + 1, _endIdx);
-	if (!name && !value) return void 0;
-	if (name.length + value.length > 4096) return void 0;
-	if (options?.decode !== false) value = _decode(value, options?.decode);
-	const setCookie = {
-		name,
-		value
-	};
-	let index = _endIdx + 1;
-	while (index < len) {
-		let endIdx = len;
-		let attrEqIdx = -1;
-		for (let i = index; i < len; i++) {
-			const c = str.charCodeAt(i);
-			if (c === 59) {
-				endIdx = i;
-				break;
-			}
-			if (c === 61 && attrEqIdx === -1) attrEqIdx = i;
-		}
-		if (attrEqIdx >= endIdx) attrEqIdx = -1;
-		const attr = attrEqIdx === -1 ? _trim(str, index, endIdx) : _trim(str, index, attrEqIdx);
-		const val = attrEqIdx === -1 ? void 0 : _trim(str, attrEqIdx + 1, endIdx);
-		if (val === void 0 || val.length <= 1024) switch (attr.toLowerCase()) {
-			case "httponly":
-				setCookie.httpOnly = true;
-				break;
-			case "secure":
-				setCookie.secure = true;
-				break;
-			case "partitioned":
-				setCookie.partitioned = true;
-				break;
-			case "domain":
-				if (val) setCookie.domain = (val.charCodeAt(0) === 46 ? val.slice(1) : val).toLowerCase();
-				break;
-			case "path":
-				setCookie.path = val;
-				break;
-			case "max-age":
-				if (val && maxAgeRegExp.test(val)) setCookie.maxAge = Math.min(Number(val), COOKIE_MAX_AGE_LIMIT);
-				break;
-			case "expires": {
-				if (!val) break;
-				const date = new Date(val);
-				if (Number.isFinite(date.valueOf())) {
-					const maxDate = new Date(Date.now() + COOKIE_MAX_AGE_LIMIT * 1e3);
-					setCookie.expires = date > maxDate ? maxDate : date;
-				}
-				break;
-			}
-			case "priority": {
-				if (!val) break;
-				const priority = val.toLowerCase();
-				if (priority === "low" || priority === "medium" || priority === "high") setCookie.priority = priority;
-				break;
-			}
-			case "samesite": {
-				if (!val) break;
-				const sameSite = val.toLowerCase();
-				if (sameSite === "lax" || sameSite === "strict" || sameSite === "none") setCookie.sameSite = sameSite;
-				else setCookie.sameSite = "lax";
-				break;
-			}
-			default: {
-				const attrLower = attr.toLowerCase();
-				if (attrLower && !(attrLower in _nullProto)) setCookie[attrLower] = val;
-			}
-		}
-		index = endIdx + 1;
-	}
-	return setCookie;
-}
-function _trim(str, start, end) {
-	if (start === end) return "";
-	let s = start;
-	let e = end;
-	while (s < e && (str.charCodeAt(s) === 32 || str.charCodeAt(s) === 9)) s++;
-	while (e > s && (str.charCodeAt(e - 1) === 32 || str.charCodeAt(e - 1) === 9)) e--;
-	return str.slice(s, e);
-}
-function _decode(value, decode) {
-	if (!decode && !value.includes("%")) return value;
-	try {
-		return (decode || decodeURIComponent)(value);
-	} catch {
-		return value;
-	}
-}
+//#endregion
+//#region node_modules/cookie-es/dist/index.mjs
 function splitSetCookieString(cookiesString) {
 	if (Array.isArray(cookiesString)) return cookiesString.flatMap((c) => splitSetCookieString(c));
 	if (typeof cookiesString !== "string") return [];
@@ -3080,7 +2989,8 @@ function splitSetCookieString(cookiesString) {
 	}
 	return cookiesStrings;
 }
-// node_modules/@tanstack/router-core/dist/esm/ssr/headers.js
+//#endregion
+//#region node_modules/@tanstack/router-core/dist/esm/ssr/headers.js
 function toHeadersInstance(init) {
 	if (init instanceof Headers) return init;
 	else if (Array.isArray(init)) return new Headers(init);
@@ -3096,4 +3006,5 @@ function mergeHeaders(...headers) {
 		return acc;
 	}, new Headers());
 }
-export { getNormalizedURL as a, makeSerovalPlugin as c, decodeArrayBuffer as d, getTypedArrayConstructor as f, attachRouterServerSsrUtils as i, toCrossJSONAsync as l, parseSetCookie as n, createRawStreamRPCPlugin as o, createSerializationAdapter as p, splitSetCookieString as r, defaultSerovalDeserializerPlugins as s, mergeHeaders as t, toCrossJSONStream as u };
+//#endregion
+export { defaultSerovalDeserializerPlugins as a, toCrossJSONStream as c, createSerializationAdapter as d, createRawStreamRPCPlugin as i, decodeArrayBuffer as l, attachRouterServerSsrUtils as n, makeSerovalPlugin as o, getNormalizedURL as r, toCrossJSONAsync as s, mergeHeaders as t, getTypedArrayConstructor as u };
