@@ -634,6 +634,46 @@ export async function loadSprites() {
   return out;
 }
 
+// Presentation only: keep the 32px grid, actor positions and hitboxes unchanged.
+const ACTOR_DRAW_SIZE = 44;
+const readableActorSheets = new WeakMap<HTMLImageElement, HTMLCanvasElement>();
+
+function drawActor(
+  ctx: CanvasRenderingContext2D,
+  sheet: HTMLImageElement,
+  frame: number,
+  x: number,
+  y: number,
+) {
+  let readable = readableActorSheets.get(sheet);
+  if (!readable) {
+    readable = document.createElement("canvas");
+    readable.width = sheet.width;
+    readable.height = sheet.height;
+    const paint = readable.getContext("2d");
+    if (paint) {
+      // Apply once per sheet, not per animation frame (especially on phones).
+      paint.filter = "saturate(1.8) brightness(1.5) contrast(1.08)";
+      paint.drawImage(sheet, 0, 0);
+      readableActorSheets.set(sheet, readable);
+    } else {
+      readable = undefined;
+    }
+  }
+  ctx.save();
+  ctx.shadowColor = "#071422";
+  ctx.shadowBlur = 2;
+  ctx.shadowOffsetY = 1;
+  ctx.drawImage(
+    readable ?? sheet,
+    frame * TILE, 0, TILE, TILE,
+    x + (TILE - ACTOR_DRAW_SIZE) / 2,
+    y + TILE - 4 - (30 / TILE) * ACTOR_DRAW_SIZE,
+    ACTOR_DRAW_SIZE, ACTOR_DRAW_SIZE,
+  );
+  ctx.restore();
+}
+
 export function drawFrame(
   ctx: CanvasRenderingContext2D,
   s: GameState,
@@ -652,6 +692,9 @@ export function drawFrame(
       ctx.drawImage(sprites.tile_floor, c * TILE, r * TILE);
     }
   }
+  // Lift only the floor, leaving walls, crates, pickups and blasts distinct.
+  ctx.fillStyle = "rgba(125, 181, 204, 0.20)";
+  ctx.fillRect(0, 0, W, H);
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
       const cell = s.grid[idx(c, r)];
@@ -709,7 +752,7 @@ export function drawFrame(
   for (const e of s.enemies) {
     const p = actorPixel(e);
     const frame = e.moving ? Math.floor(now * 6) % 2 : 0;
-    ctx.drawImage(sprites.enemy_walk, frame * 32, 0, 32, 32, p.x, p.y - 2, 32, 32);
+    drawActor(ctx, sprites.enemy_walk, frame, p.x, p.y);
   }
 
   if (s.phase === "playing" || s.phase === "paused" || s.phase === "clear") {
@@ -726,9 +769,9 @@ export function drawFrame(
               : sprites.player_walk_down;
       const frame = s.player.moving ? Math.floor(s.player.t * 4) % 4 : 0;
       if (!s.player.moving && s.player.dir === "down") {
-        ctx.drawImage(sprites.player_idle, p.x, p.y - 2);
+        drawActor(ctx, sprites.player_idle, 0, p.x, p.y);
       } else {
-        ctx.drawImage(strip, frame * 32, 0, 32, 32, p.x, p.y - 2, 32, 32);
+        drawActor(ctx, strip, frame, p.x, p.y);
       }
     }
   }

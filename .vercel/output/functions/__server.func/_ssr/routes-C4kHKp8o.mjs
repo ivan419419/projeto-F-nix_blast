@@ -1,7 +1,7 @@
 import { i as __toESM } from "../_runtime.mjs";
 import { Ht as require_react, b as require_jsx_runtime } from "../_libs/@tanstack/react-router+[...].mjs";
 import { a as Flame, c as ChevronLeft, i as Heart, l as ChevronDown, n as Play, o as ChevronUp, r as Pause, s as ChevronRight, u as Bomb } from "../_libs/lucide-react.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/routes-akYklvWW.js
+//#region node_modules/.nitro/vite/services/ssr/assets/routes-C4kHKp8o.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var HI_KEY = "fenix-blast-hi";
@@ -566,12 +566,38 @@ async function loadSprites() {
 	})));
 	return out;
 }
+var ACTOR_DRAW_SIZE = 44;
+var readableActorSheets = /* @__PURE__ */ new WeakMap();
+function drawActor(ctx, sheet, frame, x, y) {
+	let readable = readableActorSheets.get(sheet);
+	if (!readable) {
+		readable = document.createElement("canvas");
+		readable.width = sheet.width;
+		readable.height = sheet.height;
+		const paint = readable.getContext("2d");
+		if (paint) {
+			paint.filter = "saturate(1.8) brightness(1.5) contrast(1.08)";
+			paint.drawImage(sheet, 0, 0);
+			readableActorSheets.set(sheet, readable);
+		} else readable = void 0;
+	}
+	ctx.save();
+	ctx.shadowColor = "#071422";
+	ctx.shadowBlur = 2;
+	ctx.shadowOffsetY = 1;
+	ctx.drawImage(readable ?? sheet, frame * 32, 0, 32, 32, x + -6, y + 32 - 4 - 30 / 32 * ACTOR_DRAW_SIZE, ACTOR_DRAW_SIZE, ACTOR_DRAW_SIZE);
+	ctx.restore();
+}
 function drawFrame(ctx, s, sprites, now) {
+	const W = 480;
+	const H = 416;
 	ctx.imageSmoothingEnabled = false;
 	const sx = s.shake ? (Math.random() - .5) * s.shake : 0;
 	const sy = s.shake ? (Math.random() - .5) * s.shake : 0;
 	ctx.setTransform(1, 0, 0, 1, sx, sy);
 	for (let r = 0; r < 13; r++) for (let c = 0; c < 15; c++) ctx.drawImage(sprites.tile_floor, c * 32, r * 32);
+	ctx.fillStyle = "rgba(125, 181, 204, 0.20)";
+	ctx.fillRect(0, 0, W, H);
 	for (let r = 0; r < 13; r++) for (let c = 0; c < 15; c++) {
 		const cell = s.grid[idx(c, r)];
 		if (cell === 1) ctx.drawImage(sprites.tile_wall, c * 32, r * 32);
@@ -612,15 +638,15 @@ function drawFrame(ctx, s, sprites, now) {
 	for (const e of s.enemies) {
 		const p = actorPixel(e);
 		const frame = e.moving ? Math.floor(now * 6) % 2 : 0;
-		ctx.drawImage(sprites.enemy_walk, frame * 32, 0, 32, 32, p.x, p.y - 2, 32, 32);
+		drawActor(ctx, sprites.enemy_walk, frame, p.x, p.y);
 	}
 	if (s.phase === "playing" || s.phase === "paused" || s.phase === "clear") {
 		const p = actorPixel(s.player);
 		if (!(s.iFrames > 0 && Math.floor(now * 12) % 2 === 0)) {
 			const strip = s.player.dir === "up" ? sprites.player_walk_up : s.player.dir === "left" ? sprites.player_walk_left : s.player.dir === "right" ? sprites.player_walk_right : sprites.player_walk_down;
 			const frame = s.player.moving ? Math.floor(s.player.t * 4) % 4 : 0;
-			if (!s.player.moving && s.player.dir === "down") ctx.drawImage(sprites.player_idle, p.x, p.y - 2);
-			else ctx.drawImage(strip, frame * 32, 0, 32, 32, p.x, p.y - 2, 32, 32);
+			if (!s.player.moving && s.player.dir === "down") drawActor(ctx, sprites.player_idle, 0, p.x, p.y);
+			else drawActor(ctx, strip, frame, p.x, p.y);
 		}
 	}
 	if (s.flash > 0) {
