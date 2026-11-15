@@ -201,7 +201,9 @@ export function GameView() {
           <p className="font-display text-[11px] font-semibold uppercase tracking-[0.28em] text-cyan">
             Fênix Blast
           </p>
-          <p className="truncate text-xs text-muted">Ivan Moreira de Araújo</p>
+          {(snap.phase === "title" || snap.phase === "how") && (
+            <p className="truncate text-xs text-muted">Ivan Moreira de Araújo</p>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {snap.phase === "playing" ? (
@@ -286,6 +288,11 @@ export function GameView() {
             O mascote de Ivan Moreira de Araújo entra na arena. Plante bombas, abra caminho entre as
             caixas e elimine os drones rivais.
           </p>
+          <div className="mx-auto max-w-sm space-y-1 text-sm leading-relaxed text-muted">
+            <p>Movimento: setas ou WASD; no celular, use os botões na tela.</p>
+            <p>Bomba: Espaço, J ou botão de bomba. Elimine os drones e encontre o portal.</p>
+          </div>
+          <p className="text-xs text-muted">Um jogo de Ivan Moreira de Araújo</p>
           <div className="mt-2 flex flex-col items-center gap-2">
             <PrimaryBtn onClick={begin}>Jogar</PrimaryBtn>
             <GhostBtn
