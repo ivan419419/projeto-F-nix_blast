@@ -27,17 +27,79 @@ import {
 const MAP_W = COLS * TILE;
 const MAP_H = ROWS * TILE;
 
+// Trilha original em estilo retrô, sintetizada sem download adicional.
+function makeMusic() {
+  let context: AudioContext | null = null;
+  let timer: ReturnType<typeof setInterval> | null = null;
+  let master: GainNode | null = null;
+  let cursor = 0;
+  const notes = [330, 392, 440, 392, 330, 294, 262, 294, 330, 392, 523, 494, 440, 392, 330, 0];
+  const tick = () => {
+    if (!context || !master || context.state !== "running") return;
+    const freq = notes[cursor++ % notes.length]!;
+    if (!freq) return;
+    const t = context.currentTime;
+    const oscillator = context.createOscillator();
+    const envelope = context.createGain();
+    oscillator.type = "triangle";
+    oscillator.frequency.value = freq;
+    envelope.gain.setValueAtTime(0.0001, t);
+    envelope.gain.exponentialRampToValueAtTime(0.24, t + 0.015);
+    envelope.gain.exponentialRampToValueAtTime(0.0001, t + 0.19);
+    oscillator.connect(envelope);
+    envelope.connect(master);
+    oscillator.start(t);
+    oscillator.stop(t + 0.2);
+    oscillator.onended = () => { oscillator.disconnect(); envelope.disconnect(); };
+  };
+  return {
+    start() {
+      try {
+        if (!context) { context = new AudioContext(); master = context.createGain(); master.connect(context.destination); }
+        if (master) master.gain.value = 0.025;
+        if (context.state === "suspended") void context.resume();
+        if (timer === null) { tick(); timer = setInterval(tick, 230); }
+      } catch { /* O jogo funciona sem áudio. */ }
+    },
+    stop() {
+      if (timer !== null) clearInterval(timer);
+      timer = null;
+      if (master) master.gain.value = 0;
+    },
+    dispose() {
+      if (timer !== null) clearInterval(timer);
+      timer = null;
+      if (context) void context.close();
+      context = null;
+      master = null;
+    },
+  };
+}
+
 export function GameView() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const stateRef = useRef<GameState>(createGame());
   const spritesRef = useRef<Record<SpriteName, HTMLImageElement> | null>(null);
   const audioRef = useRef<ReturnType<typeof makeAudio> | null>(null);
+  const musicRef = useRef<ReturnType<typeof makeMusic> | null>(null);
+  const mutedRef = useRef(false);
+  const [muted, setMuted] = useState(false);
   const accRef = useRef(0);
   const lastRef = useRef(0);
   const [ready, setReady] = useState(false);
   const [snap, setSnap] = useState<HudSnap>(() => hud(stateRef.current));
   const [loadError, setLoadError] = useState<string | null>(null);
   const touchDir = useRef<string | null>(null);
+
+  useEffect(() => {
+    try { const saved = window.localStorage.getItem("fenix-blast-som-mudo") === "1"; mutedRef.current = saved; setMuted(saved); } catch { /* armazenamento indisponível */ }
+    return () => { musicRef.current?.dispose(); musicRef.current = null; };
+  }, []);
+
+  useEffect(() => {
+    if (snap.phase !== "playing" || muted) musicRef.current?.stop();
+    else musicRef.current?.start();
+  }, [snap.phase, muted]);
 
   useEffect(() => {
     let dead = false;
@@ -139,7 +201,7 @@ export function GameView() {
         accRef.current -= 1 / 60;
       }
       const audio = audioRef.current;
-      if (audio) {
+      if (audio && !mutedRef.current) {
         if (s.bombs.length > beforeBombs) audio.play("place");
         if (s.blasts.length > beforeBlasts) audio.play("boom");
         if (s.pickups.length < beforePick) audio.play("pickup");
@@ -164,12 +226,18 @@ export function GameView() {
 
   const unlock = () => {
     if (!audioRef.current) audioRef.current = makeAudio();
-    audioRef.current.unlock();
+    try {
+      if (!mutedRef.current) {
+        audioRef.current.unlock();
+        if (!musicRef.current) musicRef.current = makeMusic();
+        musicRef.current.start();
+      }
+    } catch { /* O jogo funciona sem áudio. */ }
   };
 
   const begin = () => {
     unlock();
-    audioRef.current?.play("start");
+    if (!mutedRef.current) audioRef.current?.play("start");
     startRun(stateRef.current);
     setSnap(hud(stateRef.current));
   };
@@ -344,6 +412,25 @@ export function GameView() {
           >
             Continuar
           </PrimaryBtn>
+          <button
+            type="button"
+            aria-pressed={muted}
+            className="text-sm text-muted underline underline-offset-4"
+            onClick={() => {
+              const next = !mutedRef.current;
+              mutedRef.current = next;
+              setMuted(next);
+              if (next) musicRef.current?.stop();
+              else {
+                if (!musicRef.current) musicRef.current = makeMusic();
+                musicRef.current.start();
+                musicRef.current.stop();
+              }
+              try { window.localStorage.setItem("fenix-blast-som-mudo", next ? "1" : "0"); } catch { /* armazenamento indisponível */ }
+            }}
+          >
+            {muted ? "Configurações: som desligado (ativar)" : "Configurações: som ligado (silenciar)"}
+          </button>
           <GhostBtn
             onClick={() => {
               stateRef.current.phase = "title";
