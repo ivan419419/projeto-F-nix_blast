@@ -1,7 +1,7 @@
 import { i as __toESM } from "../_runtime.mjs";
-import { L as require_react, v as require_jsx_runtime } from "../_libs/@tanstack/react-router+[...].mjs";
+import { Bt as require_react, y as require_jsx_runtime } from "../_libs/@tanstack/react-router+[...].mjs";
 import { a as Flame, c as ChevronLeft, i as Heart, l as ChevronDown, n as Play, o as ChevronUp, r as Pause, s as ChevronRight, u as Bomb } from "../_libs/lucide-react.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/routes-D3ABpuMA.js
+// node_modules/.nitro/vite/services/ssr/assets/routes-DUqYC0OO.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var HI_KEY = "fenix-blast-hi";
@@ -103,7 +103,7 @@ function startRun(s) {
 	s.phase = "playing";
 }
 function nextLevel(s) {
-	if (s.level >= 5) {
+	if (s.level >= 25) {
 		s.phase = "over";
 		if (s.score > s.hi) {
 			s.hi = s.score;
@@ -172,7 +172,7 @@ function walkable(s, c, r, ignoreBomb = false) {
 	return true;
 }
 function wantedDir(s) {
-	const order = [
+	for (const k of [
 		"KeyA",
 		"ArrowLeft",
 		"KeyD",
@@ -181,12 +181,25 @@ function wantedDir(s) {
 		"ArrowUp",
 		"KeyS",
 		"ArrowDown"
-	];
-	for (const k of order) if (s.just.has(k)) return DIR_FROM_KEY[k] ?? null;
-	for (const k of order) if (s.keys.has(k)) return DIR_FROM_KEY[k] ?? null;
+	]) if (s.just.has(k)) return DIR_FROM_KEY[k] ?? null;
 	return null;
 }
 function tryMove(s, a, dir, speed, dt, ignoreBomb = false) {
+	if (a.moving && dir === {
+		left: "right",
+		right: "left",
+		up: "down",
+		down: "up"
+	}[a.dir] && a.t > 0 && a.t < 1) {
+		const nc = a.fromC;
+		const nr = a.fromR;
+		a.fromC = a.toC;
+		a.fromR = a.toR;
+		a.toC = nc;
+		a.toR = nr;
+		a.t = 1 - a.t;
+		a.dir = dir;
+	}
 	if (!a.moving) {
 		const [dc, dr] = DIRS[dir];
 		const nc = a.c + dc;
@@ -209,6 +222,18 @@ function tryMove(s, a, dir, speed, dt, ignoreBomb = false) {
 			a.fromR = a.r;
 			a.t = 0;
 			a.moving = false;
+			if (a !== s.player) {
+				const [dc, dr] = DIRS[dir];
+				const nc = a.c + dc;
+				const nr = a.r + dr;
+				a.dir = dir;
+				if (walkable(s, nc, nr, ignoreBomb)) {
+					a.moving = true;
+					a.toC = nc;
+					a.toR = nr;
+					a.t = Math.min(a.t, .99);
+				}
+			}
 		}
 	}
 }
@@ -419,11 +444,14 @@ function step(s, dt) {
 				s.hi = s.score;
 				saveHi(s.hi);
 			}
-			if (s.level >= 5) s.phase = "over";
+			if (s.level >= 25) s.phase = "over";
 			else s.phase = "clear";
 		}
 	}
 	s.just.clear();
+}
+function pixelOf(a) {
+	return actorPixel(a);
 }
 function press(s, code) {
 	if (!s.keys.has(code)) s.just.add(code);
@@ -695,7 +723,9 @@ function GameView() {
 		const probe = {
 			getYaw: () => yawOf(s),
 			getSpeed: () => speedOf(s),
-			setKeys: (codes) => setHeld(s, codes)
+			setKeys: (codes) => setHeld(s, codes),
+			getX: () => pixelOf(s.player).x,
+			getY: () => pixelOf(s.player).y
 		};
 		window.__controlsTest = probe;
 		let raf = 0;
@@ -796,7 +826,7 @@ function GameView() {
 					}) : null
 				})]
 			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(HudBar, { snap }),
+			snap.phase === "playing" || snap.phase === "paused" || snap.phase === "clear" || snap.phase === "over" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(HudBar, { snap }) : null,
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 				className: "relative z-10 flex min-h-0 flex-1 items-center justify-center px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))]",
 				children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
@@ -950,7 +980,7 @@ function GameView() {
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(PrimaryBtn, {
 						onClick: goNext,
-						children: snap.level >= 5 ? "Ver resultado" : "Próxima arena"
+						children: snap.level >= 25 ? "Ver resultado" : "Próxima arena"
 					})
 				]
 			}),
@@ -963,7 +993,7 @@ function GameView() {
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
 						className: "font-display text-3xl font-semibold",
-						children: snap.level >= 5 && snap.lives > 0 ? "Fênix absoluta" : "A arena venceu"
+						children: snap.level >= 25 && snap.lives > 0 ? "Fênix absoluta" : "A arena venceu"
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
 						className: "text-sm text-muted",
@@ -999,7 +1029,7 @@ function HudBar({ snap }) {
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stat, {
 				label: "Nível",
-				value: `${snap.level}/5`
+				value: `${snap.level}/25`
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stat, {
 				label: "Vidas",
@@ -1034,8 +1064,8 @@ function Stat({ label, value, icon, className = "" }) {
 }
 function Overlay({ children, dim }) {
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-		className: "absolute inset-0 z-20 flex items-center justify-center px-4",
-		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: `absolute inset-0 ${dim ? "bg-bg/70" : "bg-bg/80"}` }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		className: "absolute inset-0 z-50 flex items-center justify-center px-4",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: `absolute inset-0 ${dim ? "bg-bg/80" : "bg-bg/92"}` }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 			className: "relative w-full max-w-md rounded-[var(--radius-xl)] border border-border bg-surface p-6 text-center shadow-[0_24px_80px_rgba(0,0,0,0.5)] sm:p-8",
 			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 				className: "flex flex-col gap-4",
@@ -1081,7 +1111,7 @@ function TouchPad({ visible, onDir, onBomb }) {
 	});
 	const cell = "grid size-12 place-items-center rounded-[var(--radius-sm)] border border-border bg-surface/90 text-fg active:bg-cyan active:text-ink sm:size-14";
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-		className: "pointer-events-none relative z-10 flex items-end justify-between px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:hidden",
+		className: "pointer-events-none relative z-10 hidden max-sm:flex items-end justify-between px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]",
 		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 			className: "pointer-events-auto grid grid-cols-3 grid-rows-3 gap-1.5",
 			children: [
@@ -1136,5 +1166,4 @@ function TouchPad({ visible, onDir, onBomb }) {
 function Home() {
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameView, {});
 }
-//#endregion
 export { Home as component };
