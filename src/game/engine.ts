@@ -39,6 +39,16 @@ export type Blast = {
 };
 
 export type Pickup = { c: number; r: number; kind: PowerKind; bob: number };
+export type Sinkhole = { c: number; r: number; phase: "warning" | "open"; timer: number };
+export type FireTrail = { c: number; r: number; ttl: number };
+export type FireEvent = {
+  phase: "warning" | "active";
+  timer: number;
+  route: { c: number; r: number }[];
+  index: number;
+  stepTimer: number;
+  trail: FireTrail[];
+};
 
 export type GameState = {
   phase: Phase;
@@ -57,6 +67,12 @@ export type GameState = {
   blasts: Blast[];
   pickups: Pickup[];
   exit: { c: number; r: number; open: boolean } | null;
+  exitTarget: { c: number; r: number };
+  sinkholes: Sinkhole[];
+  sinkholeTimer: number;
+  fireTimer: number;
+  fire: FireEvent | null;
+  hazardSeq: number;
   shake: number;
   flash: number;
   tick: number;
@@ -71,6 +87,8 @@ const DIRS: Record<Dir, [number, number]> = {
   up: [0, -1],
   down: [0, 1],
 };
+
+const SPAWN = { c: 1, r: 1 };
 
 const DIR_FROM_KEY: Record<string, Dir> = {
   KeyA: "left",
@@ -91,6 +109,85 @@ function mulberry32(a: number) {
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
+}
+
+function newRunSeed() {
+  if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
+    const seed = new Uint32Array(1);
+    crypto.getRandomValues(seed);
+    return seed[0] || 1;
+  }
+  return (Date.now() ^ 0x9e3779b9) >>> 0 || 1;
+}
+
+function shuffled<T>(items: T[], rng: () => number) {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [copy[i], copy[j]] = [copy[j]!, copy[i]!];
+  }
+  return copy;
+}
+
+function carvePath(grid: Cell[], start: { c: number; r: number }, goal: { c: number; r: number }) {
+  const startIndex = idx(start.c, start.r);
+  const goalIndex = idx(goal.c, goal.r);
+  const previous = new Int32Array(COLS * ROWS).fill(-1);
+  const queue = [startIndex];
+  previous[startIndex] = startIndex;
+
+  for (let head = 0; head < queue.length && previous[goalIndex] === -1; head++) {
+    const current = queue[head]!;
+    const c = current % COLS;
+    const r = Math.floor(current / COLS);
+    for (const [dc, dr] of Object.values(DIRS)) {
+      const nc = c + dc;
+      const nr = r + dr;
+      if (!inBounds(nc, nr)) continue;
+      const next = idx(nc, nr);
+      if (previous[next] !== -1 || grid[next] === 1) continue;
+      previous[next] = current;
+      queue.push(next);
+    }
+  }
+
+  if (previous[goalIndex] === -1) return [];
+  const path: number[] = [];
+  for (let at = goalIndex; at !== startIndex; at = previous[at]!) path.push(at);
+  path.push(startIndex);
+  return path.reverse();
+}
+
+function reachableFloor(grid: Cell[], start: { c: number; r: number }) {
+  const reached = new Set<number>();
+  const startIndex = idx(start.c, start.r);
+  if (grid[startIndex] !== 0) return reached;
+  const queue = [startIndex];
+  reached.add(startIndex);
+  for (let head = 0; head < queue.length; head++) {
+    const current = queue[head]!;
+    const c = current % COLS;
+    const r = Math.floor(current / COLS);
+    for (const [dc, dr] of Object.values(DIRS)) {
+      const nc = c + dc;
+      const nr = r + dr;
+      if (!inBounds(nc, nr)) continue;
+      const next = idx(nc, nr);
+      if (grid[next] !== 0 || reached.has(next)) continue;
+      reached.add(next);
+      queue.push(next);
+    }
+  }
+  return reached;
+}
+
+export function validateLevelConnectivity(s: GameState) {
+  const reached = reachableFloor(s.grid, SPAWN);
+  return (
+    s.grid[idx(s.exitTarget.c, s.exitTarget.r)] === 0 &&
+    reached.has(idx(s.exitTarget.c, s.exitTarget.r)) &&
+    s.enemies.every((enemy) => reached.has(idx(enemy.c, enemy.r)))
+  );
 }
 
 export function idx(c: number, r: number) {
@@ -137,6 +234,12 @@ export function createGame(): GameState {
     blasts: [],
     pickups: [],
     exit: null,
+    exitTarget: { c: COLS - 2, r: ROWS - 2 },
+    sinkholes: [],
+    sinkholeTimer: 0,
+    fireTimer: 0,
+    fire: null,
+    hazardSeq: 0,
     shake: 0,
     flash: 0,
     tick: 0,
@@ -160,6 +263,7 @@ export function startRun(s: GameState) {
   s.flame = 1;
   s.speed = 3.2;
   s.level = 1;
+  s.seed = newRunSeed();
   buildLevel(s, 1);
   s.phase = "playing";
 }
@@ -179,7 +283,9 @@ export function nextLevel(s: GameState) {
 }
 
 export function buildLevel(s: GameState, level: number) {
-  const rng = mulberry32(level * 997 + 13);
+  const levelSeed = (s.seed ^ Math.imul(level, 0x9e3779b1)) >>> 0;
+  const terrainRng = mulberry32(levelSeed);
+  const placementRng = mulberry32(levelSeed ^ 0xa511e9b3);
   const grid = s.grid;
   grid.fill(0);
   for (let r = 0; r < ROWS; r++) {
@@ -190,21 +296,26 @@ export function buildLevel(s: GameState, level: number) {
     }
   }
 
-  const density = Math.min(0.72, 0.34 + level * 0.07);
+  const density = Math.min(0.54, 0.3 + level * 0.009);
   for (let r = 1; r < ROWS - 1; r++) {
     for (let c = 1; c < COLS - 1; c++) {
       if (grid[idx(c, r)] !== 0) continue;
       if (c + r <= 4) continue; // keep spawn pocket open
-      if (rng() < density) grid[idx(c, r)] = 2;
+      if (terrainRng() < density) grid[idx(c, r)] = 2;
     }
   }
 
-  s.player = blankActor(1, 1, "down");
+  s.player = blankActor(SPAWN.c, SPAWN.r, "down");
   s.iFrames = 1.6;
   s.bombs = [];
   s.blasts = [];
   s.pickups = [];
   s.exit = null;
+  s.sinkholes = [];
+  s.fire = null;
+  s.hazardSeq = 0;
+  s.sinkholeTimer = 4.8 + placementRng() * 2.2;
+  s.fireTimer = 13 + placementRng() * 6;
   s.shake = 0;
   s.flash = 0;
 
@@ -219,14 +330,32 @@ export function buildLevel(s: GameState, level: number) {
     [1, ROWS - 4],
   ];
   const count = Math.min(corners.length, 2 + level);
-  s.enemies = [];
-  for (let i = 0; i < count; i++) {
-    const [c, r] = corners[i]!;
-    grid[idx(c, r)] = 0;
-    // open a path cell next to them
-    if (inBounds(c - 1, r) && grid[idx(c - 1, r)] === 2) grid[idx(c - 1, r)] = 0;
-    const dirs: Dir[] = ["left", "right", "up", "down"];
-    s.enemies.push(blankActor(c, r, dirs[i % 4]!));
+  const targets = shuffled(corners, placementRng)
+    .slice(0, count)
+    .map(([c, r]) => ({ c, r }));
+  const enemyIndices = new Set(targets.map(({ c, r }) => idx(c, r)));
+  const exitCandidates: { c: number; r: number; distance: number }[] = [];
+  for (let r = 1; r < ROWS - 1; r++) {
+    for (let c = 1; c < COLS - 1; c++) {
+      if (grid[idx(c, r)] === 1 || enemyIndices.has(idx(c, r))) continue;
+      exitCandidates.push({ c, r, distance: Math.abs(c - SPAWN.c) + Math.abs(r - SPAWN.r) });
+    }
+  }
+  exitCandidates.sort((a, b) => b.distance - a.distance);
+  const farthestChoices = Math.min(8, exitCandidates.length);
+  const exitChoice = exitCandidates[Math.floor(placementRng() * farthestChoices)]!;
+  s.exitTarget = { c: exitChoice.c, r: exitChoice.r };
+
+  for (const target of [...targets, s.exitTarget]) {
+    for (const cell of carvePath(grid, SPAWN, target)) grid[cell] = 0;
+  }
+
+  const dirs: Dir[] = ["left", "right", "up", "down"];
+  s.enemies = targets.map(({ c, r }, i) => blankActor(c, r, dirs[i % dirs.length]!));
+  if (!validateLevelConnectivity(s)) {
+    for (const target of [...targets, s.exitTarget]) {
+      for (const cell of carvePath(grid, SPAWN, target)) grid[cell] = 0;
+    }
   }
 }
 
@@ -411,17 +540,169 @@ function enemyStep(s: GameState, e: Actor, dt: number) {
   tryMove(s, e, e.dir, speed, dt, true);
 }
 
+function hazardRandom(s: GameState) {
+  const seed =
+    (s.seed ^ Math.imul(s.level, 0x85ebca6b) ^ Math.imul(++s.hazardSeq, 0x9e3779b9)) >>> 0;
+  return mulberry32(seed);
+}
+
+function hazardCell(s: GameState, rng: () => number) {
+  const candidates: { c: number; r: number }[] = [];
+  for (let r = 1; r < ROWS - 1; r++) {
+    for (let c = 1; c < COLS - 1; c++) {
+      if (s.grid[idx(c, r)] !== 0) continue;
+      if (Math.abs(c - SPAWN.c) + Math.abs(r - SPAWN.r) < 4) continue;
+      if (s.player.c === c && s.player.r === r) continue;
+      if (s.player.moving && s.player.toC === c && s.player.toR === r) continue;
+      if (
+        s.enemies.some(
+          (enemy) =>
+            (enemy.c === c && enemy.r === r) ||
+            (enemy.moving && enemy.toC === c && enemy.toR === r),
+        )
+      )
+        continue;
+      if (s.bombs.some((bomb) => bomb.c === c && bomb.r === r)) continue;
+      if (s.pickups.some((pickup) => pickup.c === c && pickup.r === r)) continue;
+      if (s.exitTarget.c === c && s.exitTarget.r === r) continue;
+      if (s.sinkholes.some((hole) => hole.c === c && hole.r === r)) continue;
+      candidates.push({ c, r });
+    }
+  }
+  return candidates.length ? candidates[Math.floor(rng() * candidates.length)]! : null;
+}
+
+function spiralRoute() {
+  const route: { c: number; r: number }[] = [];
+  let left = 1;
+  let right = COLS - 2;
+  let top = 1;
+  let bottom = ROWS - 2;
+  while (left <= right && top <= bottom) {
+    for (let c = left; c <= right; c++) route.push({ c, r: top });
+    for (let r = top + 1; r <= bottom; r++) route.push({ c: right, r });
+    if (bottom > top) {
+      for (let c = right - 1; c >= left; c--) route.push({ c, r: bottom });
+    }
+    if (right > left) {
+      for (let r = bottom - 1; r > top; r--) route.push({ c: left, r });
+    }
+    left++;
+    right--;
+    top++;
+    bottom--;
+  }
+  return route;
+}
+
+function startFireWarning(s: GameState) {
+  const rng = hazardRandom(s);
+  const mirrorX = rng() < 0.5;
+  const mirrorY = rng() < 0.5;
+  let route = spiralRoute().map(({ c, r }) => ({
+    c: mirrorX ? COLS - 1 - c : c,
+    r: mirrorY ? ROWS - 1 - r : r,
+  }));
+  if (rng() < 0.5) route = route.reverse();
+  s.fire = { phase: "warning", timer: 2.6, route, index: -1, stepTimer: 0, trail: [] };
+}
+
+function enterFireCell(s: GameState, c: number, r: number) {
+  const fire = s.fire;
+  if (!fire) return;
+  fire.trail.push({ c, r, ttl: 0.42 });
+  if (s.grid[idx(c, r)] === 2) {
+    s.grid[idx(c, r)] = 0;
+    s.score += 10;
+    maybeDrop(s, c, r);
+  }
+}
+
+function updateHazards(s: GameState, dt: number) {
+  for (let i = s.sinkholes.length - 1; i >= 0; i--) {
+    const hole = s.sinkholes[i]!;
+    hole.timer -= dt;
+    if (hole.timer > 0) continue;
+    if (hole.phase === "warning") {
+      hole.phase = "open";
+      hole.timer = 2.35;
+    } else {
+      s.sinkholes.splice(i, 1);
+    }
+  }
+
+  if (s.sinkholes.length < 2) {
+    s.sinkholeTimer -= dt;
+    if (s.sinkholeTimer <= 0) {
+      const rng = hazardRandom(s);
+      const cell = hazardCell(s, rng);
+      if (cell) s.sinkholes.push({ ...cell, phase: "warning", timer: 1.35 });
+      s.sinkholeTimer = 5.8 - Math.min(1.2, s.level * 0.035) + rng() * 2.4;
+    }
+  }
+
+  if (!s.fire) {
+    s.fireTimer -= dt;
+    if (s.fireTimer <= 0) startFireWarning(s);
+    return;
+  }
+
+  const fire = s.fire;
+  for (const cell of fire.trail) cell.ttl -= dt;
+  fire.trail = fire.trail.filter((cell) => cell.ttl > 0);
+  if (fire.phase === "warning") {
+    fire.timer -= dt;
+    if (fire.timer <= 0) {
+      fire.phase = "active";
+      fire.stepTimer = 0;
+    }
+    return;
+  }
+
+  fire.stepTimer -= dt;
+  const stepDuration = Math.max(0.105, 0.15 - (s.level - 1) * 0.0018);
+  while (fire.stepTimer <= 0 && s.fire === fire) {
+    fire.index++;
+    if (fire.index >= fire.route.length) {
+      s.fire = null;
+      const rng = hazardRandom(s);
+      s.fireTimer = 17 + rng() * 7;
+      break;
+    }
+    const cell = fire.route[fire.index]!;
+    enterFireCell(s, cell.c, cell.r);
+    fire.stepTimer += stepDuration;
+  }
+}
+
+function actorTouchesCell(actor: Actor, c: number, r: number) {
+  return (actor.c === c && actor.r === r) || (actor.moving && actor.toC === c && actor.toR === r);
+}
+
+function actorInSinkhole(s: GameState, actor: Actor) {
+  return s.sinkholes.some(
+    (hole) => hole.phase === "open" && actorTouchesCell(actor, hole.c, hole.r),
+  );
+}
+
+function actorInFire(s: GameState, actor: Actor) {
+  return (
+    s.fire?.phase === "active" &&
+    s.fire.trail.some((cell) => actorTouchesCell(actor, cell.c, cell.r))
+  );
+}
+
 export function step(s: GameState, dt: number) {
   const cap = Math.min(dt, 0.1);
-  s.tick += cap;
-  s.shake = Math.max(0, s.shake - cap * 18);
-  s.flash = Math.max(0, s.flash - cap);
-  s.iFrames = Math.max(0, s.iFrames - cap);
-
   if (s.phase !== "playing") {
     s.just.clear();
     return;
   }
+
+  s.tick += cap;
+  s.shake = Math.max(0, s.shake - cap * 18);
+  s.flash = Math.max(0, s.flash - cap);
+  s.iFrames = Math.max(0, s.iFrames - cap);
 
   const dir = wantedDir(s);
   if (dir) tryMove(s, s.player, dir, s.speed, cap);
@@ -437,7 +718,15 @@ export function step(s: GameState, dt: number) {
   for (const bl of s.blasts) bl.ttl -= cap;
   s.blasts = s.blasts.filter((b) => b.ttl > 0);
 
-  if (tileHasBlast(s, s.player.c, s.player.r) || (s.player.moving && tileHasBlast(s, s.player.toC, s.player.toR))) {
+  if (
+    tileHasBlast(s, s.player.c, s.player.r) ||
+    (s.player.moving && tileHasBlast(s, s.player.toC, s.player.toR))
+  ) {
+    killPlayer(s);
+  }
+
+  updateHazards(s, cap);
+  if ((actorInSinkhole(s, s.player) || actorInFire(s, s.player)) && s.iFrames <= 0) {
     killPlayer(s);
   }
 
@@ -449,6 +738,11 @@ export function step(s: GameState, dt: number) {
       continue;
     }
     enemyStep(s, e, cap);
+    if (actorInSinkhole(s, e) || actorInFire(s, e)) {
+      e.alive = false;
+      s.score += 100;
+      continue;
+    }
     if (e.c === s.player.c && e.r === s.player.r && s.iFrames <= 0) killPlayer(s);
   }
 
@@ -473,17 +767,7 @@ export function step(s: GameState, dt: number) {
 
   if (s.enemies.length === 0 && s.phase === "playing") {
     if (!s.exit) {
-      // farthest empty from spawn
-      let best = { c: COLS - 2, r: ROWS - 2, d: -1 };
-      for (let r = 1; r < ROWS - 1; r++) {
-        for (let c = 1; c < COLS - 1; c++) {
-          if (s.grid[idx(c, r)] !== 0) continue;
-          if (occupiedByBomb(s, c, r)) continue;
-          const d = Math.abs(c - 1) + Math.abs(r - 1);
-          if (d > best.d) best = { c, r, d };
-        }
-      }
-      s.exit = { c: best.c, r: best.r, open: true };
+      s.exit = { ...s.exitTarget, open: true };
     }
     if (s.exit && s.player.c === s.exit.c && s.player.r === s.exit.r) {
       s.score += 400 + s.level * 150;
@@ -666,10 +950,14 @@ function drawActor(
   ctx.shadowOffsetY = 1;
   ctx.drawImage(
     readable ?? sheet,
-    frame * TILE, 0, TILE, TILE,
+    frame * TILE,
+    0,
+    TILE,
+    TILE,
     x + (TILE - ACTOR_DRAW_SIZE) / 2,
     y + TILE - 4 - (30 / TILE) * ACTOR_DRAW_SIZE,
-    ACTOR_DRAW_SIZE, ACTOR_DRAW_SIZE,
+    ACTOR_DRAW_SIZE,
+    ACTOR_DRAW_SIZE,
   );
   ctx.restore();
 }
@@ -700,6 +988,77 @@ export function drawFrame(
       const cell = s.grid[idx(c, r)];
       if (cell === 1) ctx.drawImage(sprites.tile_wall, c * TILE, r * TILE);
       if (cell === 2) ctx.drawImage(sprites.tile_crate, c * TILE, r * TILE);
+    }
+  }
+
+  for (const hole of s.sinkholes) {
+    const x = (hole.c + 0.5) * TILE;
+    const y = (hole.r + 0.5) * TILE;
+    const pulse = 0.88 + Math.sin(now * 13) * 0.08;
+    ctx.save();
+    if (hole.phase === "warning") {
+      ctx.globalAlpha = 0.72 + Math.sin(now * 18) * 0.2;
+      ctx.fillStyle = "rgba(255, 215, 0, 0.18)";
+      ctx.beginPath();
+      ctx.arc(x, y, TILE * 0.38 * pulse, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#ffd700";
+      ctx.lineWidth = 2.5;
+      ctx.setLineDash([4, 3]);
+      ctx.beginPath();
+      ctx.arc(x, y, TILE * 0.4 * pulse, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = "#fff0a6";
+      ctx.font = "bold 16px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("!", x, y);
+    } else {
+      const pit = ctx.createRadialGradient(x, y, 2, x, y, TILE * 0.42);
+      pit.addColorStop(0, "#070b11");
+      pit.addColorStop(0.68, "#10141b");
+      pit.addColorStop(1, "rgba(255, 122, 0, 0.9)");
+      ctx.fillStyle = pit;
+      ctx.beginPath();
+      ctx.ellipse(x, y, TILE * 0.42 * pulse, TILE * 0.32 * pulse, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255, 122, 0, 0.95)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  if (s.fire?.phase === "warning") {
+    ctx.save();
+    ctx.strokeStyle = "rgba(255, 122, 0, 0.72)";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([3, 5]);
+    ctx.beginPath();
+    s.fire.route.forEach((cell, i) => {
+      const x = (cell.c + 0.5) * TILE;
+      const y = (cell.r + 0.5) * TILE;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    ctx.restore();
+  } else if (s.fire?.phase === "active") {
+    for (const cell of s.fire.trail) {
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, cell.ttl / 0.42);
+      ctx.shadowColor = "#ff7a00";
+      ctx.shadowBlur = 12;
+      ctx.fillStyle = "#ff7a00";
+      ctx.beginPath();
+      ctx.ellipse((cell.c + 0.5) * TILE, (cell.r + 0.5) * TILE, 11, 14, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#ffd700";
+      ctx.beginPath();
+      ctx.arc((cell.c + 0.5) * TILE, (cell.r + 0.5) * TILE, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
     }
   }
 
@@ -795,9 +1154,21 @@ export type HudSnap = {
   flame: number;
   enemies: number;
   exitOpen: boolean;
+  seedCode: string;
+  hazard: string | null;
 };
 
 export function hud(s: GameState): HudSnap {
+  const hazard =
+    s.fire?.phase === "warning"
+      ? "ESPIRAL DE FOGO: SAIA DA ROTA"
+      : s.fire?.phase === "active"
+        ? "ESPIRAL ATIVA: CONTINUE EM MOVIMENTO"
+        : s.sinkholes.some((hole) => hole.phase === "warning")
+          ? "SUMIDOURO PISCANDO: SAIA DO CÍRCULO"
+          : s.sinkholes.some((hole) => hole.phase === "open")
+            ? "SUMIDOURO ABERTO: NÃO PISE NO VÃO"
+            : null;
   return {
     phase: s.phase,
     level: s.level,
@@ -809,5 +1180,7 @@ export function hud(s: GameState): HudSnap {
     flame: s.flame,
     enemies: s.enemies.length,
     exitOpen: Boolean(s.exit?.open),
+    seedCode: (s.seed >>> 0).toString(36).toUpperCase().padStart(7, "0"),
+    hazard,
   };
 }

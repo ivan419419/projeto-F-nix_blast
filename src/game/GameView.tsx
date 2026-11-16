@@ -1,5 +1,15 @@
 import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
-import { Bomb, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Flame, Heart, Pause, Play } from "lucide-react";
+import {
+  Bomb,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  Flame,
+  Heart,
+  Pause,
+  Play,
+} from "lucide-react";
 import {
   COLS,
   createGame,
@@ -144,12 +154,13 @@ export function GameView() {
         if (s.blasts.length > beforeBlasts) audio.play("boom");
         if (s.pickups.length < beforePick) audio.play("pickup");
         if (s.lives < beforeLives) audio.play("hurt");
-        if (beforePhase === "playing" && (s.phase === "clear" || s.phase === "over")) audio.play("win");
+        if (beforePhase === "playing" && (s.phase === "clear" || s.phase === "over"))
+          audio.play("win");
       }
       const sprites = spritesRef.current;
       if (sprites) drawFrame(ctx, s, sprites, ms / 1000);
       const next = hud(s);
-      const key = `${next.phase}|${next.score}|${next.lives}|${next.bombs}|${next.flame}|${next.level}|${next.enemies}|${next.exitOpen}`;
+      const key = `${next.phase}|${next.score}|${next.lives}|${next.bombs}|${next.flame}|${next.level}|${next.enemies}|${next.exitOpen}|${next.seedCode}|${next.hazard}`;
       if (key !== lastHud) {
         lastHud = key;
         setSnap(next);
@@ -201,7 +212,10 @@ export function GameView() {
           <p className="font-display text-[11px] font-semibold uppercase tracking-[0.28em] text-cyan">
             Fênix Blast
           </p>
-          <p className="truncate text-xs text-muted">Ivan Moreira de Araújo</p>
+          <p className="truncate text-xs text-muted">
+            Ivan Moreira de Araújo
+            {snap.phase !== "title" && snap.phase !== "how" ? ` · Mapa ${snap.seedCode}` : ""}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           {snap.phase === "playing" ? (
@@ -228,8 +242,20 @@ export function GameView() {
         </div>
       </header>
 
-      {snap.phase === "playing" || snap.phase === "paused" || snap.phase === "clear" || snap.phase === "over" ? (
+      {snap.phase === "playing" ||
+      snap.phase === "paused" ||
+      snap.phase === "clear" ||
+      snap.phase === "over" ? (
         <HudBar snap={snap} />
+      ) : null}
+      {snap.phase === "playing" && snap.hazard ? (
+        <div
+          role="status"
+          aria-live="polite"
+          className="relative z-10 mx-auto mt-2 max-w-3xl rounded-[var(--radius-sm)] border border-orange/50 bg-surface/95 px-3 py-1.5 text-center text-[11px] font-semibold tracking-wide text-orange sm:text-xs"
+        >
+          {snap.hazard}
+        </div>
       ) : null}
 
       <div className="relative z-10 flex min-h-0 flex-1 items-center justify-center px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
@@ -283,8 +309,8 @@ export function GameView() {
             Fênix Blast
           </h1>
           <p className="mx-auto max-w-sm text-sm leading-relaxed text-muted">
-            O mascote de Ivan Moreira de Araújo entra na arena. Plante bombas, abra caminho entre as
-            caixas e elimine os drones rivais.
+            Cada partida cria um labirinto novo. Abra caminhos com bombas, evite os sumidouros e
+            fuja da espiral de fogo.
           </p>
           <div className="mt-2 flex flex-col items-center gap-2">
             <PrimaryBtn onClick={begin}>Jogar</PrimaryBtn>
@@ -315,6 +341,11 @@ export function GameView() {
             <li>
               <span className="text-fg">Poderes</span> — bomba extra, chama maior, velocidade e
               vida.
+            </li>
+            <li>
+              <span className="text-fg">Perigos</span> — sumidouros piscam antes de abrir; a espiral
+              mostra o trajeto antes de avançar. Caindo, você perde uma vida e renasce protegido por
+              instantes.
             </li>
             <li>
               <span className="text-fg">Objetivo</span> — elimine os drones e entre no portal
@@ -368,7 +399,9 @@ export function GameView() {
 
       {snap.phase === "over" && (
         <Overlay dim>
-          <p className="font-display text-xs uppercase tracking-[0.28em] text-orange">Fim de jogo</p>
+          <p className="font-display text-xs uppercase tracking-[0.28em] text-orange">
+            Fim de jogo
+          </p>
           <h2 className="font-display text-3xl font-semibold">
             {snap.level >= MAX_LEVEL && snap.lives > 0 ? "Fênix absoluta" : "A arena venceu"}
           </h2>
