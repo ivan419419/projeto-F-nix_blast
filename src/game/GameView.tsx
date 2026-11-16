@@ -207,15 +207,28 @@ export function GameView() {
         }}
       />
 
-      <header className="relative z-10 flex items-center justify-between gap-3 px-4 pb-2 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6">
+      <header
+        className={`relative ${snap.phase === "paused" ? "z-10" : "z-[60]"} flex items-center justify-between gap-3 px-4 pb-2 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6`}
+      >
         <div className="min-w-0">
           <p className="font-display text-[11px] font-semibold uppercase tracking-[0.28em] text-cyan">
             Fênix Blast
           </p>
-          <p className="truncate text-xs text-muted">
-            Ivan Moreira de Araújo
-            {snap.phase !== "title" && snap.phase !== "how" ? ` · Mapa ${snap.seedCode}` : ""}
-          </p>
+          <div className="flex min-w-0 items-center gap-2 text-[10px] leading-4 text-muted">
+            <span className="min-w-0 truncate">
+              © 2026 Ivan Moreira de Araujo
+              {snap.phase !== "title" && snap.phase !== "how" ? ` · Mapa ${snap.seedCode}` : ""}
+            </span>
+            <a
+              href="https://www.tiktok.com/@achadosanosdourados?_r=1&_t=ZS-9BSGQP0YF1t"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Siga o criador Achados Anos Dourados no TikTok"
+              className="shrink-0 underline decoration-border underline-offset-2 transition-colors hover:text-cyan focus-visible:outline focus-visible:outline-cyan"
+            >
+              Siga no TikTok
+            </a>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {snap.phase === "playing" ? (
